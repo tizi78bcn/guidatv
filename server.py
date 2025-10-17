@@ -20,7 +20,15 @@ def get_matches():
         day_str = single_day.isoformat()
         url = f"https://www.thesportsdb.com/api/v1/json/1/eventsday.php?d={day_str}&s=Soccer"
         response = requests.get(url)
-        data = response.json()
+        if response.status_code != 200 or not response.text.strip():
+            print("Errore HTTP su:", url, "Code:", response.status_code, "Testo:", response.text)
+            continue
+        try:
+            data = response.json()
+        except Exception as e:
+            print("Errore nel parsing JSON per URL", url)
+            print("Risposta text:", response.text)
+            continue
         if 'events' in data and data['events']:
             for event in data['events']:
                 home = event.get('strHomeTeam', '')
@@ -33,10 +41,16 @@ def get_matches():
                 # Chiamata TV broadcaster
                 channel = ""
                 tv_url = f"https://www.thesportsdb.com/api/v1/json/1/lookuptv.php?id={id_event}"
-                tv_resp = requests.get(tv_url).json()
-                if tv_resp and 'tvevents' in tv_resp and tv_resp['tvevents']:
-                    tv_list = [tv['strTVStation'] for tv in tv_resp['tvevents'] if tv.get('strTVStation')]
-                    channel = ", ".join(tv_list)
+                tv_resp = requests.get(tv_url)
+                if tv_resp.status_code == 200 and tv_resp.text.strip():
+                    try:
+                        tv_data = tv_resp.json()
+                        if tv_data and 'tvevents' in tv_data and tv_data['tvevents']:
+                            tv_list = [tv['strTVStation'] for tv in tv_data['tvevents'] if tv.get('strTVStation')]
+                            channel = ", ".join(tv_list)
+                    except Exception as e:
+                        print("Errore parsing TV JSON per", id_event)
+                        print(tv_resp.text)
                 matches.append({
                     'date': match_datetime,
                     'home': home,
