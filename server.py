@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 app = Flask(__name__)
 CORS(app)
+print(f"Team Football-Data: {home} - {away}")
 
 API_TOKEN = '25587c5b08c3454280851f933ca0cc19'             # Football-Data API
 SPORTMONKS_TOKEN = '7OKlYCEyMOngBGRF6zvnNsVMvFZi1Dua2sO7WCPX5iRhIeeNpEaTNWG5yIU9'  # Sportmonks API
@@ -51,6 +52,11 @@ for match in data.get('matches', []):
     # Fai qui la chiamata Sportmonks → sm_response = requests.get(...)
     print(f"Sportmonks Response for date {match_date[:10]}: {sm_response.text}")  # Mostra la raw response qui
 
+    if 'data' in sm_data:
+    for sm_match in sm_data['data']:
+        print(f"Team Sportmonks: {sm_match.get('home_team_name', '')} - {sm_match.get('away_team_name', '')}")
+
+
         channel = ""
         # Ricerca partita corrispondente (per data, nome squadre): semplificata!
         if 'data' in sm_data:
@@ -81,4 +87,5 @@ for match in data.get('matches', []):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
