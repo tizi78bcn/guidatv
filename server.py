@@ -52,6 +52,24 @@ for match in data.get('matches', []):
     # Fai qui la chiamata Sportmonks → sm_response = requests.get(...)
     print(f"Sportmonks Response for date {match_date[:10]}: {sm_response.text}")  # Mostra la raw response qui
 
+    # QUI: dopo la chiamata dettaglio tvstations
+    tv_response = requests.get(url_tv)  # URL dettagliata include=tvstations
+    tv_data = tv_response.json()
+    
+    channels = tv_data['data'].get('tvstations', [])
+    if channels:
+        channel = ", ".join([ch['name'] for ch in channels])
+    else:
+        channel = ""  # O 'Non disponibile'
+    
+    matches.append({
+        'date': match_date,
+        'home': home,
+        'away': away,
+        'competition': competition,
+        'channel': channel
+    })
+
     if 'data' in sm_data:
     for sm_match in sm_data['data']:
         print(f"Team Sportmonks: {sm_match.get('home_team_name', '')} - {sm_match.get('away_team_name', '')}")
@@ -97,6 +115,7 @@ for match in data.get('matches', []):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
 
