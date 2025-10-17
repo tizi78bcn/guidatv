@@ -75,6 +75,16 @@ for match in data.get('matches', []):
                         channel = ", ".join([ch['name'] for ch in tv_list])
                     break  # Abbiamo trovato la partita
 
+        if home.lower() in sm_home and away.lower() in sm_away:
+    fixture_id = sm_match['id']
+    url_tv = f"https://api.sportmonks.com/v3/football/fixtures/{fixture_id}?include=tvstations&api_token={SPORTMONKS_TOKEN}"
+    tv_response = requests.get(url_tv)
+    print("TVstations raw response:", tv_response.text)
+    tv_data = tv_response.json()
+    # Subito dopo parsing:
+    channels = tv_data['data'].get('tvstations', [])
+    print("Channels found:", channels)
+        
         matches.append({
             'date': match_date,
             'home': home,
@@ -87,5 +97,6 @@ for match in data.get('matches', []):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
