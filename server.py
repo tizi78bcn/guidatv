@@ -12,6 +12,19 @@ ENDPOINT = 'https://api.football-data.org/v4/matches'
 @app.route('/matches')
 def get_matches():
     headers = {'X-Auth-Token': API_TOKEN}
+    from datetime import date, timedelta
+
+today = date.today()
+date_from = today.isoformat()
+date_to = (today + timedelta(days=4)).isoformat()  # 4 giorni da oggi
+
+params = {
+    "competitions": "CL,SA,PD,PL,EL,ECL,WC,EC,FL1,BL1",
+    "status": "SCHEDULED",
+    "dateFrom": date_from,
+    "dateTo": date_to
+}
+
    params = {
     "competitions": "CL,SA,PD,PL,EL,ECL,WC,EC,FL1",
     "status": "SCHEDULED"
@@ -33,5 +46,6 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
