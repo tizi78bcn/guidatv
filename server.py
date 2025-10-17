@@ -18,6 +18,7 @@ def get_matches():
     }
     response = requests.get(ENDPOINT, headers=headers, params=params)
     data = response.json()
+    print(data)
     matches = []
     for match in data.get('matches', []):
         matches.append({
@@ -32,3 +33,4 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
