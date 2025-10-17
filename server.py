@@ -12,6 +12,9 @@ THESPORTSDB_KEY = "1"  # Sostituisci con la tua key personale se ce l'hai
 @app.route('/')
 def index():
     return 'Backend is running!'
+    
+@app.route('/matches')
+def get_matches():
 
 def collect_events_and_tvstations():
     today = date.today()
@@ -57,3 +60,4 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
