@@ -44,6 +44,12 @@ def get_matches():
         query_sportmonks = f"{SPORTMONKS_ENDPOINT}?api_token={SPORTMONKS_TOKEN}&date={match_date[:10]}"
         sm_response = requests.get(query_sportmonks)
         sm_data = sm_response.json()
+for match in data.get('matches', []):
+    # (codice per estrarre home, away, match_date ...)
+    print(f"Football-Data: {home} vs {away} on {match_date}")
+    
+    # Fai qui la chiamata Sportmonks → sm_response = requests.get(...)
+    print(f"Sportmonks Response for date {match_date[:10]}: {sm_response.text}")  # Mostra la raw response qui
 
         channel = ""
         # Ricerca partita corrispondente (per data, nome squadre): semplificata!
@@ -75,3 +81,4 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
