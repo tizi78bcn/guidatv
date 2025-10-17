@@ -1,53 +1,33 @@
+import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-matches = [
-    {
-        "id": 1,
-        "home": "Juventus",
-        "away": "Inter",
-        "datetime": "2025-10-20T20:45:00",
-        "country": "Italia",
-        "broadcast": True,
-        "channel": "DAZN 1"
-    },
-    {
-        "id": 2,
-        "home": "Barcelona",
-        "away": "Real Madrid",
-        "datetime": "2025-10-21T21:00:00",
-        "country": "Spagna",
-        "broadcast": True,
-        "channel": "Movistar LaLiga"
-    },
-    {
-        "id": 3,
-        "home": "Manchester United",
-        "away": "Liverpool",
-        "datetime": "2025-10-22T18:30:00",
-        "country": "Inghilterra",
-        "broadcast": True,
-        "channel": "Sky Sport Premier"
-    },
-    {
-        "id": 4,
-        "home": "Napoli",
-        "away": "Roma",
-        "datetime": "2025-10-23T20:45:00",
-        "country": "Italia",
-        "broadcast": False,
-        "channel": ""
-    }
-]
+API_TOKEN = '25587c5b08c3454280851f933ca0cc19'
+ENDPOINT = 'https://api.football-data.org/v4/matches'
 
 @app.route('/matches')
 def get_matches():
+    headers = {'X-Auth-Token': API_TOKEN}
+    params = {
+        "competitions": "CL,SA,PD,PL,EL,ECL,WC,EC",
+        "status": "SCHEDULED"   # puoi mettere "LIVE","FINISHED" ecc secondo la doc
+    }
+    response = requests.get(ENDPOINT, headers=headers, params=params)
+    data = response.json()
+    matches = []
+    for match in data.get('matches', []):
+        matches.append({
+            'date': match['utcDate'],
+            'home': match['homeTeam']['name'],
+            'away': match['awayTeam']['name'],
+            'competition': match['competition']['name'],
+            'channel': ''   # Da riempire se trovi anche nomi canali TV
+        })
     return jsonify(matches)
-
-import os
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
