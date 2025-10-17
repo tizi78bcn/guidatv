@@ -4,10 +4,14 @@ from flask_cors import CORS
 import os
 from datetime import date, timedelta
 
-app = Flask(__name__)
+app = Flask(__name__)  # <-- Qui DEVE essere "app"
 CORS(app)
 
 THESPORTSDB_KEY = "1"  # Sostituisci con la tua key personale se ce l'hai
+
+@app.route('/')
+def index():
+    return 'Backend is running!'
 
 def collect_events_and_tvstations():
     today = date.today()
