@@ -21,7 +21,7 @@ date_to = (today + timedelta(days=4)).isoformat()  # 4 giorni da oggi
 
 params = {
     "competitions": "CL,SA,PD,PL,EL,ECL,WC,EC,FL1,BL1",
-    "status": "SCHEDULED",
+    "status": "SCHEDULED,LIVE",
     "dateFrom": date_from,
     "dateTo": date_to
 }
@@ -43,6 +43,7 @@ params = {
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
 
