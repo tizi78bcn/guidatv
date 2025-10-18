@@ -44,7 +44,7 @@
 
         // Fetch all matches from backend
         async function fetchMatches() {
-            const res = await fetch("/api/matches");
+            const res = await fetch("/matches");
             matches = await res.json();
             populateFilters();
             renderTable();
