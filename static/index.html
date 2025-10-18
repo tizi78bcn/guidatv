@@ -41,66 +41,65 @@
     </table>
 
     <script>
-        let matches = [];
+    let matches = [];
 
-        // Fetch all matches from backend
-        async function fetchMatches() {
-            const res = await fetch("/matches");
-            matches = await res.json();
-            populateFilters();
-            renderTable();
-        }
+    // Fetch all matches from backend
+    async function fetchMatches() {
+        const res = await fetch("/matches");
+        matches = await res.json();
+        populateFilters();
+        renderTable();
+    }
 
-        function populateFilters() {         
-    const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
-    matches.forEach(m => {
-        dateSet.add(m.date);
-        teamSet.add(m.home);
-        teamSet.add(m.away);
-        compSet.add(m.competition);
-    }); // Chiudi solo qui!
-    fillSelect("filter-date", Array.from(dateSet));
-    fillSelect("filter-team", Array.from(teamSet));
-    fillSelect("filter-comp", Array.from(compSet));
-}
+    function populateFilters() {
+        const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
+        matches.forEach(m => {
+            // Usa solo il giorno (YYYY-MM-DD) per la data
+            const day = m.date.slice(0, 10);
+            dateSet.add(day);
+            teamSet.add(m.home);
+            teamSet.add(m.away);
+            compSet.add(m.competition);
+        });
+        fillSelect("filter-date", Array.from(dateSet));
+        fillSelect("filter-team", Array.from(teamSet));
+        fillSelect("filter-comp", Array.from(compSet));
+    }
 
-        function fillSelect(id, arr) {
-            const sel = document.getElementById(id);
-            sel.innerHTML = `<option value="Tutte">Tutte</option>` + arr.map(v => `<option value="${v}">${v}</option>`).join('');
-        }
+    function fillSelect(id, arr) {
+        const sel = document.getElementById(id);
+        sel.innerHTML = `<option value="Tutte">Tutte</option>` + arr.map(v => `<option value="${v}">${v}</option>`).join('');
+    }
 
-        function renderTable() {
-            const date = document.getElementById("filter-date").value;
-            const team = document.getElementById("filter-team").value;
-            const comp = document.getElementById("filter-comp").value;
-            const search = document.getElementById("filter-search").value.trim().toLowerCase();
-            const filtered = matches.filter(m =>
-    (date === "Tutte" || m.date === date) &&
-    (team === "Tutte" || m.home === team || m.away === team) &&
-    (comp === "Tutte" || m.competition === comp) &&
-    (search === "" ||
-      m.home.toLowerCase().includes(search) ||
-      m.away.toLowerCase().includes(search))
-);
+    function renderTable() {
+        const date = document.getElementById("filter-date").value;
+        const team = document.getElementById("filter-team").value;
+        const comp = document.getElementById("filter-comp").value;
+        const search = document.getElementById("filter-search").value.trim().toLowerCase();
+        const filtered = matches.filter(m =>
+            (date === "Tutte" || m.date.slice(0,10) === date) &&
+            (team === "Tutte" || m.home === team || m.away === team) &&
+            (comp === "Tutte" || m.competition === comp) &&
+            (search === "" ||
+             m.home.toLowerCase().includes(search) ||
+             m.away.toLowerCase().includes(search))
+        );
+        document.querySelector("#matches-table tbody").innerHTML =
+            filtered.map(m =>
+            `<tr>
+               <td>${m.date}</td>
+               <td>${m.home}</td>
+               <td>${m.away}</td>
+               <td>${m.competition}</td>
+               <td>${m.channel || ""}</td>
+            </tr>`).join('');
+    }
 
-            document.querySelector("#matches-table tbody").innerHTML =
-                filtered.map(m =>
-                `<tr>
-                   <td>${m.date}</td>
-                   <td>${m.home}</td>
-                   <td>${m.away}</td>
-                   <td>${m.competition}</td>
-                   <td>${m.channel || ""}</td>
-                </tr>`).join('');
-        }
+    // Event listeners
+    document.getElementById("filter-date").addEventListener("change", renderTable);
+    document.getElementById("filter-team").addEventListener("change", renderTable);
+    document.getElementById("filter-comp").addEventListener("change", renderTable);
+    document.getElementById("filter-search").addEventListener("input", renderTable);
 
-        // Event listeners
-        document.getElementById("filter-date").addEventListener("change", renderTable);
-        document.getElementById("filter-team").addEventListener("change", renderTable);
-        document.getElementById("filter-comp").addEventListener("change", renderTable);
-        document.getElementById("filter-search").addEventListener("input", renderTable);
-
-        fetchMatches();
-    </script>
-</body>
-</html>
+    fetchMatches();
+</script>
