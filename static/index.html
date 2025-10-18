@@ -81,11 +81,11 @@
             document.querySelector("#matches-table tbody").innerHTML =
                 filtered.map(m =>
                 `<tr>
-                    <td>${m.data}</td>
-                    <td>${m.casa}</td>
-                    <td>${m.trasferta}</td>
-                    <td>${m.competizione}</td>
-                    <td>${m.canale || ""}</td>
+                   <td>${m.date}</td>
+                   <td>${m.home}</td>
+                   <td>${m.away}</td>
+                   <td>${m.competition}</td>
+                   <td>${m.channel || ""}</td>
                 </tr>`).join('');
         }
 
