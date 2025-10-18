@@ -37,7 +37,6 @@ def get_matches():
         away = match['awayTeam']['name']
         competition = match['competition']['name']
 
-        # Chiamata a Sportmonks per info TV - per ora lascia channel vuoto
         query_sportmonks = f"{SPORTMONKS_ENDPOINT}?api_token={SPORTMONKS_TOKEN}&date={match_date[:10]}"
         sm_response = requests.get(query_sportmonks)
         sm_data = sm_response.json()
@@ -71,10 +70,3 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
-import sys
-    print("PYTHON VERSION:", sys.version)
-
-
-
-
