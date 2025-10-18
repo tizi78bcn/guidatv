@@ -7,7 +7,7 @@ from datetime import date, timedelta
 app = Flask(__name__)
 CORS(app)
 
-API_TOKEN = '25587c5b08c3454280851f933ca0cc19'             # Football-Data API
+API_TOKEN = '25587c5b08c3454280851f933ca0cc19'  # Football-Data API
 SPORTMONKS_TOKEN = '7OKlYCEyMOngBGRF6zvnNsVMvFZi1Dua2sO7WCPX5iRhIeeNpEaTNWG5yIU9'  # Sportmonks API
 
 FOOTBALL_DATA_ENDPOINT = 'https://api.football-data.org/v4/matches'
@@ -32,42 +32,31 @@ def get_matches():
 
     matches = []
     for match in data.get('matches', []):
-        # Estrai nome squadre e altri dati dal match
         match_date = match.get('utcDate', '')
         home = match['homeTeam']['name']
         away = match['awayTeam']['name']
         competition = match['competition']['name']
-        # In Football-Data API non c'è il canale TV, dobbiamo recuperarlo da Sportmonks
-        # Proviamo il match tramite Sportmonks: serve l'id della partita Sportmonks, qui puoi mappare tramite nome/data/squadre
 
-        # Esempio: chiama cerca fixure da Sportmonks per nome e data (migliorabile con id campionato)
+        # Chiamata a Sportmonks per info TV
         query_sportmonks = f"{SPORTMONKS_ENDPOINT}?api_token={SPORTMONKS_TOKEN}&date={match_date[:10]}"
         sm_response = requests.get(query_sportmonks)
         sm_data = sm_response.json()
-for match in data.get('matches', []):
-    # (codice per estrarre home, away, match_date ...)
-    print(f"Football-Data: {home} vs {away} on {match_date}")
-    
-    # Fai qui la chiamata Sportmonks → sm_response = requests.get(...)
-    print(f"Sportmonks Response for date {match_date[:10]}: {sm_response.text}")  # Mostra la raw response qui
 
         channel = ""
-        # Ricerca partita corrispondente (per data, nome squadre): semplificata!
+        # Ricerca partita corrispondente (matching per nome squadra e data)
         if 'data' in sm_data:
             for sm_match in sm_data['data']:
                 sm_home = sm_match.get('home_team_name', '').lower()
                 sm_away = sm_match.get('away_team_name', '').lower()
                 if home.lower() in sm_home and away.lower() in sm_away:
                     fixture_id = sm_match['id']
-                    # Richiesta dettagli con canali TV per il fixture_id
                     url_tv = f"https://api.sportmonks.com/v3/football/fixtures/{fixture_id}?include=tvstations&api_token={SPORTMONKS_TOKEN}"
                     tv_response = requests.get(url_tv)
                     tv_data = tv_response.json()
                     if 'data' in tv_data and 'tvstations' in tv_data['data']:
                         tv_list = tv_data['data']['tvstations']
-                        # Prendi tutti i broadcaster disponibili separati da virgola
                         channel = ", ".join([ch['name'] for ch in tv_list])
-                    break  # Abbiamo trovato la partita
+                    break  # Trovata la partita
 
         matches.append({
             'date': match_date,
@@ -76,6 +65,7 @@ for match in data.get('matches', []):
             'competition': competition,
             'channel': channel
         })
+
     return jsonify(matches)
 
 if __name__ == '__main__':
