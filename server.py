@@ -92,3 +92,8 @@ def get_matches():
                         print(f"[SportMonks] tv response: {tv_data}")
                         if 'data' in tv_data and 'tvstations' in tv_data['data']:
                             tv_list = tv_data['data']['tvstations']
+    import sys
+    print("PYTHON VERSION:", sys.version)
+
+
+
