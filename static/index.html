@@ -75,11 +75,14 @@
             const comp = document.getElementById("filter-comp").value;
             const search = document.getElementById("filter-search").value.trim().toLowerCase();
             const filtered = matches.filter(m =>
-                (date === "Tutte" || m.data === date) &&
-                (team === "Tutte" || m.casa === team || m.trasferta === team) &&
-                (comp === "Tutte" || m.competizione === comp) &&
-                (search === "" || m.casa.toLowerCase().includes(search) || m.trasferta.toLowerCase().includes(search))
-            );
+    (date === "Tutte" || m.date === date) &&
+    (team === "Tutte" || m.home === team || m.away === team) &&
+    (comp === "Tutte" || m.competition === comp) &&
+    (search === "" ||
+      m.home.toLowerCase().includes(search) ||
+      m.away.toLowerCase().includes(search))
+);
+
             document.querySelector("#matches-table tbody").innerHTML =
                 filtered.map(m =>
                 `<tr>
