@@ -53,10 +53,12 @@
         function populateFilters() {
             const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
             matches.forEach(m => {
-                dateSet.add(m.data);
-                teamSet.add(m.casa);
-                teamSet.add(m.trasferta);
-                compSet.add(m.competizione);
+                dateSet.add(m.date);
+                teamSet.add(m.home);
+                teamSet.add(m.away);
+                compSet.add(m.competition);
+});
+
             });
             fillSelect("filter-date", Array.from(dateSet));
             fillSelect("filter-team", Array.from(teamSet));
