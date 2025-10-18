@@ -1,11 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GuidaTV</title>
+    <title>Partite trasmesse</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h1 { margin-bottom: 10px; }
+        #filters label { margin-right: 8px; }
+        table { border-collapse: collapse; margin-top: 16px; width: 100%; }
+        th, td { border: 1px solid #444; padding: 6px 9px; text-align: center; }
+        th { background: #f2f2f2; }
+    </style>
 </head>
 <body>
-    <h1>Welcome to GuidaTV</h1>
+    <h1>Partite trasmesse</h1>
+    <div id="filters">
+        <label>Data:
+            <select id="filter-date"><option value="Tutte">Tutte</option></select>
+        </label>
+        <label>Squadra:
+            <select id="filter-team"><option value="Tutte">Tutte</option></select>
+        </label>
+        <label>Competizione:
+            <select id="filter-comp"><option value="Tutte">Tutte</option></select>
+        </label>
+        <input type="text" id="filter-search" placeholder="Cerca squadra...">
+    </div>
+    <table id="matches-table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Casa</th>
+                <th>Trasferta</th>
+                <th>Competizione</th>
+                <th>Canale</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let matches = [];
+
+        // Fetch all matches from backend
+        async function fetchMatches() {
+            const res = await fetch("/api/matches");
+            matches = await res.json();
+            populateFilters();
+            renderTable();
+        }
+
+        function populateFilters() {
+            const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
+            matches.forEach(m => {
+                dateSet.add(m.data);
+                teamSet.add(m.casa);
+                teamSet.add(m.trasferta);
+                compSet.add(m.competizione);
+            });
+            fillSelect("filter-date", Array.from(dateSet));
+            fillSelect("filter-team", Array.from(teamSet));
+            fillSelect("filter-comp", Array.from(compSet));
+        }
+        function fillSelect(id, arr) {
+            const sel = document.getElementById(id);
+            sel.innerHTML = `<option value="Tutte">Tutte</option>` + arr.map(v => `<option value="${v}">${v}</option>`).join('');
+        }
+
+        function renderTable() {
+            const date = document.getElementById("filter-date").value;
+            const team = document.getElementById("filter-team").value;
+            const comp = document.getElementById("filter-comp").value;
+            const search = document.getElementById("filter-search").value.trim().toLowerCase();
+            const filtered = matches.filter(m =>
+                (date === "Tutte" || m.data === date) &&
+                (team === "Tutte" || m.casa === team || m.trasferta === team) &&
+                (comp === "Tutte" || m.competizione === comp) &&
+                (search === "" || m.casa.toLowerCase().includes(search) || m.trasferta.toLowerCase().includes(search))
+            );
+            document.querySelector("#matches-table tbody").innerHTML =
+                filtered.map(m =>
+                `<tr>
+                    <td>${m.data}</td>
+                    <td>${m.casa}</td>
+                    <td>${m.trasferta}</td>
+                    <td>${m.competizione}</td>
+                    <td>${m.canale || ""}</td>
+                </tr>`).join('');
+        }
+
+        // Event listeners
+        document.getElementById("filter-date").addEventListener("change", renderTable);
+        document.getElementById("filter-team").addEventListener("change", renderTable);
+        document.getElementById("filter-comp").addEventListener("change", renderTable);
+        document.getElementById("filter-search").addEventListener("input", renderTable);
+
+        fetchMatches();
+    </script>
 </body>
 </html>
