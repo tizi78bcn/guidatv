@@ -51,20 +51,19 @@
             renderTable();
         }
 
-        function populateFilters() {
-            const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
-            matches.forEach(m => {
-                dateSet.add(m.date);
-                teamSet.add(m.home);
-                teamSet.add(m.away);
-                compSet.add(m.competition);
-});
+        function populateFilters() {         
+    const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
+    matches.forEach(m => {
+        dateSet.add(m.date);
+        teamSet.add(m.home);
+        teamSet.add(m.away);
+        compSet.add(m.competition);
+    }); // Chiudi solo qui!
+    fillSelect("filter-date", Array.from(dateSet));
+    fillSelect("filter-team", Array.from(teamSet));
+    fillSelect("filter-comp", Array.from(compSet));
+}
 
-            });
-            fillSelect("filter-date", Array.from(dateSet));
-            fillSelect("filter-team", Array.from(teamSet));
-            fillSelect("filter-comp", Array.from(compSet));
-        }
         function fillSelect(id, arr) {
             const sel = document.getElementById(id);
             sel.innerHTML = `<option value="Tutte">Tutte</option>` + arr.map(v => `<option value="${v}">${v}</option>`).join('');
