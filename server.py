@@ -12,8 +12,23 @@ CORS(app)
 API_TOKEN = '25587c5b08c3454280851f933ca0cc19'
 SPORTMONKS_TOKEN = '7OKlYCEyMOngBGRF6zvnNsVMvFZi1Dua2sO7WCPX5iRhIeeNpEaTNWG5yIU9'
 
+ITALIAN_CLUBS = [
+    "Inter", "AC Milan", "Milan", "Juventus", "Napoli", "Lazio",
+    "Roma", "Fiorentina", "Atalanta", "Torino", "Udinese", "Bologna",
+    "Genoa", "Sampdoria", "Cagliari", "Verona", "Sassuolo", "Empoli",
+    "Venezia", "Palermo", "Parma", "Brescia", "Spezia", "Salernitana", "Cremonese",
+    "Monza", "Pisa", "Como"   # aggiungi club Serie A/B recenti
+]
+
 def normalize_team(name):
     return unidecode(name.lower().replace("'", "").replace("-", "").strip())
+
+def is_italian_club(name):
+    norm = normalize_team(name)
+    for club in ITALIAN_CLUBS:
+        if normalize_team(club) in norm:
+            return True
+    return False
 
 def get_tv_channel_diretta(home, away):
     try:
@@ -62,8 +77,14 @@ def get_tv_channel_marca(home, away):
         print(f"[Scraping marca.com ERROR] Match {home}-{away}:", e)
         return ""
 
-def get_fallback_channel(competition):
-    if "Serie A" in competition:
+def get_fallback_channel(competition, home, away):
+    if "Champions League" in competition:
+        # Solo se club italiano
+        if is_italian_club(home) or is_italian_club(away):
+            return "Canale 5"
+        else:
+            return ""  # nessun fallback per non italiani
+    elif "Serie A" in competition:
         return "DAZN, Sky Sport"
     elif "La Liga" in competition or "Primera Division" in competition or "Liga" in competition:
         return "DAZN (ES), Movistar Liga de Campeones"
@@ -73,8 +94,6 @@ def get_fallback_channel(competition):
         return "Sky Sport"
     elif "Ligue 1" in competition:
         return "Sky Sport"
-    elif "Champions League" in competition:
-        return "Canale 5, Sky Sport, Movistar Liga de Campeones"
     elif "Europa League" in competition or "Conference League" in competition:
         return "DAZN"
     else:
@@ -110,9 +129,8 @@ def get_matches():
         canale_esp = get_tv_channel_marca(home, away)
         if canale_esp:
             canali.append("Spagna: " + canale_esp)
-
         if not canali:
-            fallback = get_fallback_channel(competition)
+            fallback = get_fallback_channel(competition, home, away)
             if fallback:
                 canali.append(fallback)
             print(f"[FALLBACK] {home}-{away} ({competition}): {fallback if fallback else 'nessun canale'}")
@@ -131,9 +149,5 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
-
-
-
 
 
