@@ -98,14 +98,27 @@ function fillSelectCustom(id, map) {
 
 function renderTable() {
    const date = document.getElementById("filter-date").value;
+   const team = document.getElementById("filter-team").value;
+   const comp = document.getElementById("filter-comp").value;
+   const search = document.getElementById("filter-search").value.trim().toLowerCase();
    const filtered = matches.filter(m =>
-    (date === "Tutte" || m.date === date) &&
-    (team === "Tutte" || m.home === team || m.away === team) &&
-    (comp === "Tutte" || m.competition === comp) &&
-    (search === "" ||
-     m.home.toLowerCase().includes(search) ||
-     m.away.toLowerCase().includes(search))
-);
+       (date === "Tutte" || m.date === date) &&
+       (team === "Tutte" || m.home === team || m.away === team) &&
+       (comp === "Tutte" || m.competition === comp) &&
+       (search === "" ||
+        m.home.toLowerCase().includes(search) ||
+        m.away.toLowerCase().includes(search))
+   );
+   document.querySelector("#matches-table tbody").innerHTML =
+       filtered.map(m =>
+       `<tr>
+          <td>${m.date}</td>
+          <td>${m.home}</td>
+          <td>${m.away}</td>
+          <td>${m.competition}</td>
+          <td>${m.channel || ""}</td>
+       </tr>`).join('');
+}
 
         document.querySelector("#matches-table tbody").innerHTML =
             filtered.map(m =>
