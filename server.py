@@ -2,6 +2,7 @@ import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
 from bs4 import BeautifulSoup
+from unidecode import unidecode
 import os
 from datetime import date, timedelta
 
@@ -11,17 +12,20 @@ CORS(app)
 API_TOKEN = '25587c5b08c3454280851f933ca0cc19'
 SPORTMONKS_TOKEN = '7OKlYCEyMOngBGRF6zvnNsVMvFZi1Dua2sO7WCPX5iRhIeeNpEaTNWG5yIU9'
 
+def normalize_team(name):
+    # Rende la stringa insensibile ad accenti, apostrofi e maiuscole
+    return unidecode(name.lower().replace("'", "").replace("-", "").strip())
+
 def get_tv_channel_diretta(home, away):
-    # Cerca broadcaster Italia su diretta.it (solo se match del giorno!)
-    from unidecode import unidecode
+    # Cerca broadcaster Italia su diretta.it
     try:
         url = "https://www.diretta.it/partite/"
         resp = requests.get(url, timeout=8)
         soup = BeautifulSoup(resp.text, "html.parser")
-        home_s = unidecode(home.lower())
-        away_s = unidecode(away.lower())
+        home_s = normalize_team(home)
+        away_s = normalize_team(away)
         for row in soup.find_all("div", class_="event__match--scheduled"):
-            text = unidecode(row.text.lower())
+            text = normalize_team(row.text)
             if home_s in text and away_s in text:
                 channel_div = row.find_next("div", class_="event__tv")
                 if channel_div:
@@ -34,17 +38,17 @@ def get_tv_channel_diretta(home, away):
         return ""
 
 def get_tv_channel_marca(home, away):
-    # Cerca broadcaster Spagna su marca.com (solo per partite di oggi)
+    # Cerca broadcaster Spagna su marca.com
     try:
         url = "https://www.marca.com/agenda-tv.html"
         resp = requests.get(url, timeout=8)
         soup = BeautifulSoup(resp.text, "html.parser")
-        home_l = home.lower()
-        away_l = away.lower()
+        home_s = normalize_team(home)
+        away_s = normalize_team(away)
         for td in soup.find_all("td"):
-            match = td.get_text("").lower()
+            match = normalize_team(td.get_text(""))
             # Cerca team in cella (match tipo "Real Sociedad - Getafe")
-            if home_l in match and away_l in match:
+            if home_s in match and away_s in match:
                 for sibling in td.find_next_siblings("td"):
                     canale = sibling.get_text(strip=True)
                     if canale and canale.upper() != "Hora":
@@ -78,11 +82,12 @@ def get_matches():
         competition = match['competition']['name']
 
         canali = []
-        # Italia: scraping diretta.it
+
+        # Italia: diretta.it
         canale_ita = get_tv_channel_diretta(home, away)
         if canale_ita:
             canali.append("Italia: " + canale_ita)
-        # Spagna: scraping marca.com
+        # Spagna: marca.com
         canale_esp = get_tv_channel_marca(home, away)
         if canale_esp:
             canali.append("Spagna: " + canale_esp)
@@ -100,5 +105,3 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
-
