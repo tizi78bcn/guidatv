@@ -1,6 +1,7 @@
 import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
+from bs4 import BeautifulSoup
 import os
 from datetime import date, timedelta
 
@@ -10,45 +11,48 @@ CORS(app)
 API_TOKEN = '25587c5b08c3454280851f933ca0cc19'
 SPORTMONKS_TOKEN = '7OKlYCEyMOngBGRF6zvnNsVMvFZi1Dua2sO7WCPX5iRhIeeNpEaTNWG5yIU9'
 
-def get_tv_channel_thesportsdb(home, away, match_date):
-    event_name = f"{home}_vs_{away}".replace(" ", "_")
-    url_search = f"https://www.thesportsdb.com/api/v1/json/1/searchevents.php?e={event_name}&d={match_date[:10]}"
+def get_tv_channel_diretta(home, away):
+    # Cerca broadcaster Italia su diretta.it (solo se match del giorno!)
+    from unidecode import unidecode
     try:
-        resp = requests.get(url_search, timeout=6)
-        data = resp.json()
-        if data and 'event' in data and data['event']:
-            event_id = data['event'][0].get('idEvent', None)
-            if event_id:
-                url_tv = f"https://www.thesportsdb.com/api/v1/json/1/eventstv.php?id={event_id}"
-                tv_resp = requests.get(url_tv, timeout=6)
-                tv_data = tv_resp.json()
-                if tv_data and 'tvstations' in tv_data and tv_data['tvstations']:
-                    canali = [tv['strTVStation'] for tv in tv_data['tvstations'] if 'strTVStation' in tv]
-                    if canali:
-                        return ", ".join(canali)
+        url = "https://www.diretta.it/partite/"
+        resp = requests.get(url, timeout=8)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        home_s = unidecode(home.lower())
+        away_s = unidecode(away.lower())
+        for row in soup.find_all("div", class_="event__match--scheduled"):
+            text = unidecode(row.text.lower())
+            if home_s in text and away_s in text:
+                channel_div = row.find_next("div", class_="event__tv")
+                if channel_div:
+                    canale = channel_div.get_text(strip=True)
+                    if canale:
+                        return canale
+        return ""
     except Exception as e:
-        print(f"[TheSportsDB][ERROR] {home} vs {away}: {e}")
-    return ""
+        print("[Scraping diretta.it ERROR]", e)
+        return ""
 
-def get_fallback_channel(competition, home, away):
-    # Generazione automatica fallback per max copertura
-    if "Serie A" in competition:
-        # DAZN/Sky per Serie A, Italia
-        return "DAZN, Sky Sport"
-    elif "La Liga" in competition or "Primera Division" in competition or "Liga" in competition:
-        return "DAZN"
-    elif "Premier League" in competition:
-        return "Sky Sport"
-    elif "Bundesliga" in competition:
-        return "Sky Sport"
-    elif "Ligue 1" in competition:
-        return "Sky Sport"
-    elif "Champions League" in competition:
-        return "Canale 5, Sky Sport"
-    elif "Europa League" in competition or "Conference League" in competition:
-        return "DAZN"
-    else:
-        return ""  # Per altri campionati lascia vuoto
+def get_tv_channel_marca(home, away):
+    # Cerca broadcaster Spagna su marca.com (solo per partite di oggi)
+    try:
+        url = "https://www.marca.com/agenda-tv.html"
+        resp = requests.get(url, timeout=8)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        home_l = home.lower()
+        away_l = away.lower()
+        for td in soup.find_all("td"):
+            match = td.get_text("").lower()
+            # Cerca team in cella (match tipo "Real Sociedad - Getafe")
+            if home_l in match and away_l in match:
+                for sibling in td.find_next_siblings("td"):
+                    canale = sibling.get_text(strip=True)
+                    if canale and canale.upper() != "Hora":
+                        return canale
+        return ""
+    except Exception as e:
+        print("[Scraping marca.com ERROR]", e)
+        return ""
 
 @app.route('/matches')
 def get_matches():
@@ -73,35 +77,16 @@ def get_matches():
         away = match['awayTeam']['name']
         competition = match['competition']['name']
 
-        channel = ""
-        # 1. Sportmonks
-        try:
-            query_sportmonks = f"{SPORTMONKS_ENDPOINT}?api_token={SPORTMONKS_TOKEN}&date={match_date[:10]}"
-            sm_response = requests.get(query_sportmonks, timeout=6)
-            sm_data = sm_response.json()
-            if 'data' in sm_data:
-                for sm_match in sm_data['data']:
-                    sm_home = sm_match.get('home_team_name', '').lower()
-                    sm_away = sm_match.get('away_team_name', '').lower()
-                    if home.lower() in sm_home and away.lower() in sm_away:
-                        fixture_id = sm_match['id']
-                        url_tv = f"https://api.sportmonks.com/v3/football/fixtures/{fixture_id}?include=tvstations&api_token={SPORTMONKS_TOKEN}"
-                        tv_response = requests.get(url_tv, timeout=6)
-                        tv_data = tv_response.json()
-                        if 'data' in tv_data and 'tvstations' in tv_data['data']:
-                            tv_list = tv_data['data']['tvstations']
-                            if tv_list:
-                                channel = ", ".join([ch['name'] for ch in tv_list])
-                        break
-        except Exception as e:
-            print("[Sportmonks error]:", e)
-
-        # 2. Fallback TheSportsDB
-        if not channel:
-            channel = get_tv_channel_thesportsdb(home, away, match_date)
-        # 3. Ultimo fallback: automatico
-        if not channel:
-            channel = get_fallback_channel(competition, home, away)
+        canali = []
+        # Italia: scraping diretta.it
+        canale_ita = get_tv_channel_diretta(home, away)
+        if canale_ita:
+            canali.append("Italia: " + canale_ita)
+        # Spagna: scraping marca.com
+        canale_esp = get_tv_channel_marca(home, away)
+        if canale_esp:
+            canali.append("Spagna: " + canale_esp)
+        channel = " — ".join(canali)
 
         matches.append({
             'date': match_date,
@@ -115,3 +100,5 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
+
