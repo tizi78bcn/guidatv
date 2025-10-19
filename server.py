@@ -11,7 +11,6 @@ API_TOKEN = '25587c5b08c3454280851f933ca0cc19'
 SPORTMONKS_TOKEN = '7OKlYCEyMOngBGRF6zvnNsVMvFZi1Dua2sO7WCPX5iRhIeeNpEaTNWG5yIU9'
 
 def get_tv_channel_thesportsdb(home, away, match_date):
-    # Cerca evento con API SportsDB
     event_name = f"{home}_vs_{away}".replace(" ", "_")
     url_search = f"https://www.thesportsdb.com/api/v1/json/1/searchevents.php?e={event_name}&d={match_date[:10]}"
     try:
@@ -31,22 +30,25 @@ def get_tv_channel_thesportsdb(home, away, match_date):
         print(f"[TheSportsDB][ERROR] {home} vs {away}: {e}")
     return ""
 
-def get_tv_channel_diretta(home, away, match_date):
-    from bs4 import BeautifulSoup
-    import requests
-    # Esempio scraping: va revisionato in base alla struttura reale!
-    url = "https://www.diretta.it/partite/"
-    try:
-        resp = requests.get(url, timeout=6)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        tv_divs = soup.find_all("div", class_="tv")
-        for tvd in tv_divs:
-            channel = tvd.get_text(strip=True)
-            if channel:
-                return channel
-    except Exception as e:
-        print(f"[diretta.it][ERROR] {home} vs {away}:", e)
-    return ""
+def get_fallback_channel(competition, home, away):
+    # Generazione automatica fallback per max copertura
+    if "Serie A" in competition:
+        # DAZN/Sky per Serie A, Italia
+        return "DAZN, Sky Sport"
+    elif "La Liga" in competition or "Primera Division" in competition or "Liga" in competition:
+        return "DAZN"
+    elif "Premier League" in competition:
+        return "Sky Sport"
+    elif "Bundesliga" in competition:
+        return "Sky Sport"
+    elif "Ligue 1" in competition:
+        return "Sky Sport"
+    elif "Champions League" in competition:
+        return "Canale 5, Sky Sport"
+    elif "Europa League" in competition or "Conference League" in competition:
+        return "DAZN"
+    else:
+        return ""  # Per altri campionati lascia vuoto
 
 @app.route('/matches')
 def get_matches():
@@ -72,7 +74,7 @@ def get_matches():
         competition = match['competition']['name']
 
         channel = ""
-        # Sportmonks (come prima)
+        # 1. Sportmonks
         try:
             query_sportmonks = f"{SPORTMONKS_ENDPOINT}?api_token={SPORTMONKS_TOKEN}&date={match_date[:10]}"
             sm_response = requests.get(query_sportmonks, timeout=6)
@@ -94,12 +96,13 @@ def get_matches():
         except Exception as e:
             print("[Sportmonks error]:", e)
 
-        # Fallback 1: TheSportsDB
+        # 2. Fallback TheSportsDB
         if not channel:
             channel = get_tv_channel_thesportsdb(home, away, match_date)
-        # Fallback 2: Diretta.it solo per Serie A/Italia
-        if not channel and "Serie A" in competition:
-            channel = get_tv_channel_diretta(home, away, match_date)
+        # 3. Ultimo fallback: automatico
+        if not channel:
+            channel = get_fallback_channel(competition, home, away)
+
         matches.append({
             'date': match_date,
             'home': home,
@@ -112,4 +115,3 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
