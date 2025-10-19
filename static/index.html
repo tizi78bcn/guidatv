@@ -44,15 +44,13 @@
 let matches = [];
 
 // Format date for dropdown: "Dom, 19/10 - 15:00"
-function formatDateOption(dateString) {
+function formatDateOptionShort(dateString) {
     const dateObj = new Date(dateString);
     const days = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
     const dayOfWeek = days[dateObj.getDay()];
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const hours = String(dateObj.getHours()).padStart(2, '0');
-    const mins = String(dateObj.getMinutes()).padStart(2, '0');
-    return `${dayOfWeek}, ${day}/${month} - ${hours}:${mins}`;
+    return `${dayOfWeek}, ${day}/${month}`;
 }
 
 // Fetch all matches from backend
