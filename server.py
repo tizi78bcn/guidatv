@@ -121,20 +121,35 @@ def get_matches():
         away = match['awayTeam']['name']
         competition = match['competition']['name']
 
-        canali = []
+       canali = []
 
-        canale_ita = get_tv_channel_diretta(home, away)
-        if canale_ita:
-            canali.append("Italia: " + canale_ita)
-        canale_esp = get_tv_channel_marca(home, away)
-        if canale_esp:
-            canali.append("Spagna: " + canale_esp)
-        if not canali:
-            fallback = get_fallback_channel(competition, home, away)
-            if fallback:
-                canali.append(fallback)
-            print(f"[FALLBACK] {home}-{away} ({competition}): {fallback if fallback else 'nessun canale'}")
-        channel = " — ".join(canali)
+# Italia — scraping diretta.it
+canale_ita = get_tv_channel_diretta(home, away)
+if canale_ita:
+    canali.append("Italia: " + canale_ita)
+
+# Spagna — scraping marca.com
+canale_esp = get_tv_channel_marca(home, away)
+if canale_esp:
+    canali.append("Spagna: " + canale_esp)
+
+# Champions League: fallback logica avanzata
+if "Champions League" in competition and not (canale_ita or canale_esp):
+    entry = []
+    if is_italian_club(home) or is_italian_club(away):
+        entry.append("Canale 5")
+    # Sempre aggiungi anche la pay spagnola (fallback se assente scraping!)
+    entry.append("Movistar Liga de Campeones")
+    entry.append("Sky Sport")
+    entry.append("DAZN")
+    canali.append(", ".join(entry))
+elif not canali:
+    # altri fallback come da campionato
+    fallback = get_fallback_channel(competition, home, away)
+    if fallback:
+        canali.append(fallback)
+channel = " — ".join(canali)
+
 
         matches.append({
             'date': match_date,
@@ -149,5 +164,6 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
