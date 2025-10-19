@@ -112,10 +112,11 @@ def get_matches():
         if canale_esp:
             canali.append("Spagna: " + canale_esp)
 
+        # Se nessuno scraping, solo i canali fallback (senza "Altro:" come richiesto)
         if not canali:
             fallback = get_fallback_channel(competition)
             if fallback:
-                canali.append("Altro: " + fallback)
+                canali.append(fallback)
             print(f"[FALLBACK] {home}-{away} ({competition}): {fallback if fallback else 'nessun canale'}")
         channel = " — ".join(canali)
 
@@ -132,5 +133,7 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
+
 
 
