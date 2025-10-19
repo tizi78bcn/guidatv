@@ -23,16 +23,17 @@ def get_tv_channel_diretta(home, away):
         soup = BeautifulSoup(html, "html.parser")
         home_s = normalize_team(home)
         away_s = normalize_team(away)
-        for row in soup.find_all("div", class_="event__match--scheduled"):
+        for row in soup.find_all("div", class_="event__match"):
             text = normalize_team(row.text)
             if home_s in text and away_s in text:
-                channel_div = row.find_next("div", class_="event__tv")
+                channel_div = row.find("div", class_="event__tv")
+                canale = None
                 if channel_div:
                     canale = channel_div.get_text(strip=True)
-                    if canale:
-                        print(f"[DIRETTA.IT] Match {home}-{away}: trovato canale {canale}")
-                        return canale
-        print(f"[DIRETTA.IT] Match {home}-{away}: NESSUN canale trovato")
+                if canale:
+                    print(f"[DIRETTA.IT] Match {home}-{away}: canale esatto {canale}")
+                    return canale
+        print(f"[DIRETTA.IT] Match {home}-{away}: NESSUN canale esatto trovato")
         return ""
     except Exception as e:
         print(f"[Scraping diretta.it ERROR] Match {home}-{away}:", e)
@@ -46,13 +47,14 @@ def get_tv_channel_marca(home, away):
         soup = BeautifulSoup(html, "html.parser")
         home_s = normalize_team(home)
         away_s = normalize_team(away)
-        for td in soup.find_all("td"):
-            match = normalize_team(td.get_text(""))
-            if home_s in match and away_s in match:
-                for sibling in td.find_next_siblings("td"):
-                    canale = sibling.get_text(strip=True)
-                    if canale and canale.upper() != "HORA":
-                        print(f"[MARCA.COM] Match {home}-{away}: trovato canale {canale}")
+        for tr in soup.find_all("tr"):
+            tds = tr.find_all("td")
+            if len(tds) >= 4:
+                match = normalize_team(tds[1].get_text(""))
+                if home_s in match and away_s in match:
+                    canale = tds[-1].get_text(strip=True)
+                    if canale:
+                        print(f"[MARCA.COM] Match {home}-{away}: canale esatto {canale}")
                         return canale
         print(f"[MARCA.COM] Match {home}-{away}: NESSUN canale trovato")
         return ""
@@ -61,7 +63,6 @@ def get_tv_channel_marca(home, away):
         return ""
 
 def get_fallback_channel(competition):
-    # Fallback automatico se scraping non dà risultati
     if "Serie A" in competition:
         return "DAZN, Sky Sport"
     elif "La Liga" in competition or "Primera Division" in competition or "Liga" in competition:
@@ -103,16 +104,13 @@ def get_matches():
 
         canali = []
 
-        # Italia
         canale_ita = get_tv_channel_diretta(home, away)
         if canale_ita:
             canali.append("Italia: " + canale_ita)
-        # Spagna
         canale_esp = get_tv_channel_marca(home, away)
         if canale_esp:
             canali.append("Spagna: " + canale_esp)
 
-        # Se nessuno scraping, solo i canali fallback (senza "Altro:" come richiesto)
         if not canali:
             fallback = get_fallback_channel(competition)
             if fallback:
@@ -133,6 +131,8 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
+
 
 
 
