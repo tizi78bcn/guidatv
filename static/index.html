@@ -51,39 +51,62 @@
         renderTable();
     }
 
-    function populateFilters() {
-        const dateSet = new Set(), teamSet = new Set(), compSet = new Set();
-        matches.forEach(m => {
-            // Usa solo il giorno (YYYY-MM-DD) per la data
-            const day = m.date.slice(0, 10);
-            dateSet.add(day);
-            teamSet.add(m.home);
-            teamSet.add(m.away);
-            compSet.add(m.competition);
-        });
-        fillSelect("filter-date", Array.from(dateSet));
-        fillSelect("filter-team", Array.from(teamSet));
-        fillSelect("filter-comp", Array.from(compSet));
+ function formatDateOption(dateString) {
+    // Esempio: "2025-10-19T15:00:00Z"
+    const dateObj = new Date(dateString);
+    const days = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+    const dayOfWeek = days[dateObj.getDay()];
+
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const mins = String(dateObj.getMinutes()).padStart(2, '0');
+
+    return `${dayOfWeek}, ${day}/${month} - ${hours}:${mins}`;
+}
+
+function populateFilters() {
+    const dateMap = new Map(), teamSet = new Set(), compSet = new Set();
+    matches.forEach(m => {
+        // Usa originale dateString per mapping, visualizza label friendly
+        const key = m.date;
+        const label = formatDateOption(m.date);
+        dateMap.set(key, label);
+        teamSet.add(m.home);
+        teamSet.add(m.away);
+        compSet.add(m.competition);
+    });
+    fillSelectCustom("filter-date", dateMap);
+    fillSelect("filter-team", Array.from(teamSet));
+    fillSelect("filter-comp", Array.from(compSet));
+}
+
+function fillSelectCustom(id, map) {
+    const sel = document.getElementById(id);
+    // "map" è Map <data originale, label friendly>
+    let opts = `<option value="Tutte">Tutte</option>`;
+    for (const [key, txt] of map.entries()) {
+        opts += `<option value="${key}">${txt}</option>`;
     }
+    sel.innerHTML = opts;
+}
 
     function fillSelect(id, arr) {
         const sel = document.getElementById(id);
         sel.innerHTML = `<option value="Tutte">Tutte</option>` + arr.map(v => `<option value="${v}">${v}</option>`).join('');
     }
 
-    function renderTable() {
-        const date = document.getElementById("filter-date").value;
-        const team = document.getElementById("filter-team").value;
-        const comp = document.getElementById("filter-comp").value;
-        const search = document.getElementById("filter-search").value.trim().toLowerCase();
-        const filtered = matches.filter(m =>
-            (date === "Tutte" || m.date.slice(0,10) === date) &&
-            (team === "Tutte" || m.home === team || m.away === team) &&
-            (comp === "Tutte" || m.competition === comp) &&
-            (search === "" ||
-             m.home.toLowerCase().includes(search) ||
-             m.away.toLowerCase().includes(search))
-        );
+function renderTable() {
+   const date = document.getElementById("filter-date").value;
+   const filtered = matches.filter(m =>
+    (date === "Tutte" || m.date === date) &&
+    (team === "Tutte" || m.home === team || m.away === team) &&
+    (comp === "Tutte" || m.competition === comp) &&
+    (search === "" ||
+     m.home.toLowerCase().includes(search) ||
+     m.away.toLowerCase().includes(search))
+);
+
         document.querySelector("#matches-table tbody").innerHTML =
             filtered.map(m =>
             `<tr>
