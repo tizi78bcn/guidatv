@@ -1,4 +1,5 @@
+beautifulsoup4
+unidecode
 flask
 flask_cors
 requests
-beautifulsoup4
