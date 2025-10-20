@@ -16,7 +16,7 @@ ITALIAN_CLUBS = [
     "Roma", "Fiorentina", "Atalanta", "Torino", "Udinese", "Bologna",
     "Genoa", "Sampdoria", "Cagliari", "Verona", "Sassuolo", "Empoli",
     "Venezia", "Palermo", "Parma", "Brescia", "Spezia", "Salernitana", "Cremonese",
-    "Monza", "Pisa", "Como"   # aggiungi qui altri club se necessario
+    "Monza", "Pisa", "Como"
 ]
 
 def normalize_team(name):
@@ -106,11 +106,13 @@ def get_matches():
     FOOTBALL_DATA_ENDPOINT = 'https://api.football-data.org/v4/matches'
     headers = {'X-Auth-Token': API_TOKEN}
     today = date.today()
-    date_from = today.isoformat()
+    # Espandi la finestra: da ieri a +4 giorni
+    date_from = (today - timedelta(days=1)).isoformat()
     date_to = (today + timedelta(days=4)).isoformat()
     params = {
         "competitions": "CL,SA,PD,PL,EL,ECL,WC,EC,FL1,BL1",
-        "status": "SCHEDULED,LIVE",
+        # Mostra anche partite terminate
+        "status": "SCHEDULED,LIVE,FINISHED",
         "dateFrom": date_from,
         "dateTo": date_to
     }
@@ -153,5 +155,3 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
-
