@@ -106,9 +106,8 @@ def get_matches():
     FOOTBALL_DATA_ENDPOINT = 'https://api.football-data.org/v4/matches'
     headers = {'X-Auth-Token': API_TOKEN}
     today = date.today()
-    # Espandi la finestra: da ieri a +4 giorni
-    date_from = (today - timedelta(days=1)).isoformat()
-    date_to = (today + timedelta(days=4)).isoformat()
+    date_from = today.isoformat()
+    date_to = (today + timedelta(days=3)).isoformat()
     params = {
         "competitions": "CL,SA,PD,PL,EL,ECL,WC,EC,FL1,BL1",
         # Mostra anche partite terminate
@@ -155,5 +154,6 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
