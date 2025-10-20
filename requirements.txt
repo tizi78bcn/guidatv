@@ -3,3 +3,4 @@ unidecode
 flask
 flask_cors
 requests
+gunicorn
