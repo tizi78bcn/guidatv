@@ -80,7 +80,7 @@ def compose_champions_fallback(home, away):
     canali = []
     if is_italian_club(home) or is_italian_club(away):
         canali.append("Canale 5")
-    canali.append("Movistar Liga de Campeones")
+    canali.append("Movistar LdC")
     canali.append("Sky")
     canali.append("DAZN")
     return ", ".join(canali)
@@ -89,7 +89,7 @@ def get_fallback_channel(competition):
     if "Serie A" in competition:
         return "DAZN, Sky"
     elif "La Liga" in competition or "Primera Division" in competition or "Liga" in competition:
-        return "DAZN (ES), Movistar Liga de Campeones"
+        return "DAZN (ES), Movistar LdC"
     elif "Premier League" in competition:
         return "Sky"
     elif "Bundesliga" in competition:
@@ -154,6 +154,7 @@ def get_matches():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
 
